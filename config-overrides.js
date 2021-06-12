@@ -17,14 +17,17 @@ function override(config, env) {
     popup: paths.appIndexJs,
     options: paths.appSrc + '/options.js',
     background: paths.appSrc + '/background.js',
-    content: paths.appSrc + '/content.js'
   };
   // Change output filename template to get rid of hash there
   config.output.filename = 'static/js/[name].js';
-  // Disable built-in SplitChunksPlugin
+  // CSS. "5" is MiniCssPlugin
+  config.plugins[5].options.filename = 'static/js/[name].css';
+  config.plugins[5].options.publicPath = '../';
+    // Disable built-in SplitChunksPlugin
   config.optimization.splitChunks = {
-    cacheGroups: {default: false}
+    cacheGroups: { default: false },
   };
+  config.optimization.minimize = false;
   // Disable runtime chunk addition for each entry point
   config.optimization.runtimeChunk = false;
 
@@ -42,7 +45,7 @@ function override(config, env) {
     minifyURLs: true,
   };
   const isEnvProduction = env === 'production';
-  
+
   // Custom HtmlWebpackPlugin instance for index (popup) page
   const indexHtmlPlugin = new HtmlWebpackPlugin({
     inject: true,
