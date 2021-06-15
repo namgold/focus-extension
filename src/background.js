@@ -1,67 +1,71 @@
 import { DEFAULT } from "./utils/const";
+import { T } from "./utils/utils";
 
-chrome.storage.local.set(DEFAULT);
-
-let resetArray = [
-    "facebook.com",
-    "twitter.com",
-    "youtube.com",
-    "reddit.com",
-    "pinterest.com",
-    "vimeo.com",
-    "plus.google",
-    "tumblr.com",
-    "instagram.com",
-];
-
-const ICON_ON = {
-    38: "logo192.png"
+const reset = () => {
+    chrome.storage.local.clear();
+    DEFAULT.blockWebsites.forEach(website => T.addKey(website));
+    chrome.storage.local.set(DEFAULT);
 }
 
-const ICON_OFF = {
-    38: "logo192-off.png"
-}
+const isRemove = (storage, url) => storage.activated
+                                && storage.pausedActivated
+                                && Number.isInteger(storage.pausedActivated.timestamp)
+                                && Number.isInteger(storage.pausedActivated.pauseAmount)
+                                && Number.isInteger(storage.pausedActivated.resetAmount)
+                                && storage.blockWebsites.find(website => website.active && new URL(url).hostname.toLowerCase().includes(website.url.toLowerCase()))
+                                && !(Date.now() >= storage.pausedActivated.timestamp && Date.now() - storage.pausedActivated.timestamp < storage.pausedActivated.pauseAmount * 60000);
 
 chrome.tabs.onUpdated.addListener(function(id, info, tab) {
-    console.log('onUpdated', { id, info, tab });
-    chrome.storage.local.get(function(storage) {
-        if (storage.activated
-            && storage.blockWebsites.find(item => tab.url.toLowerCase().includes(item))
-            && (Date.now() - storage.pausedTimestamp > storage.resetAmount * 2000 || Date.now() - storage.pausedTimestamp < storage.pauseAmount * 2000 ))
-                chrome.tabs.remove(tab.id);
+    chrome.storage.local.get(storage => {
+        if (isRemove(storage, tab.url)) chrome.tabs.remove(id);
     });
 });
 
-/**
- * Adds Chrome onClicked listener that senses when to update extension state
- * The key difference is this method has tabID: tab.id stored as well in the
- * chrome.browserAction call
- */
-chrome.browserAction.onClicked.addListener(function(tab) {
-    // chrome.storage.sync.get(['activated'], function(items) {
-    //     let bool = items.activated;
-    //     if(bool == null) {
-    //         bool = "false";
-    //     }
-    //     if(bool.indexOf("true") > -1) {
+const getActivatedTab = done => {
+    chrome.tabs.query({ 'active': true, 'lastFocusedWindow': true }, function (tabs) {
+        try {
+            if (Array.isArray(tabs)) {
+                if (tabs[0]) {
+                    done(tabs[0]);
+                }
+            } else {
+                setTimeout(function() {
+                    getActivatedTab(done);
+                }, 100);
+            }
+        } catch(err) {
+            setTimeout(function() {
+                getActivatedTab(done);
+            }, 100);
+        }
+    });
+}
 
-    //         chrome.browserAction.setIcon({
-    //             path: ICON_OFF,
-    //             tabId: tab.id
-    //         });
-    //         chrome.storage.sync.set({'activated': 'false'}, function() {});
-    //     }
-    //     else {
-    //         chrome.browserAction.setIcon({
-    //             path: ICON_ON,
-    //             tabId: tab.id
-    //         });
-    //         chrome.storage.sync.set({'activated': 'true'}, function() {});
-    //     }
-    // });
+
+chrome.tabs.onActivated.addListener(activeInfo => {
+    getActivatedTab(tab => {
+        if (tab) {
+            chrome.storage.local.get(storage => {
+                if (isRemove(storage, tab.url)) chrome.tabs.remove(activeInfo.tabId);
+            });
+        }
+    });
+    // const intervalId = setInterval(() => {
+    //     count++;
+    //     chrome.tabs.get(activeInfo.tabId, tab => {
+    //         if (tab) {
+    //             clearInterval(intervalId);
+    //             chrome.storage.local.get(storage => {
+    //                 if (isRemove(storage, tab.url)) chrome.tabs.remove(activeInfo.tabId);
+    //             });
+    //         }
+    //     });
+    //     if (count > 1000)
+    //         clearInterval(intervalId);
+    // }, 200);
 });
 
-chrome.tabs.onCreated.addListener((...e) => console.log('onCreated: ', e));
+chrome.tabs.onUpdated.addListener((...e) => console.log('onUpdated: ', e))
 chrome.tabs.onMoved.addListener((...e) => console.log('onMoved: ', e));
 chrome.tabs.onActivated.addListener((...e) => console.log('onActivated: ', e));
 chrome.tabs.onHighlighted.addListener((...e) => console.log('onHighlighted: ', e));
@@ -71,3 +75,19 @@ chrome.tabs.onRemoved.addListener((...e) => console.log('onRemoved: ', e));
 chrome.tabs.onReplaced.addListener((...e) => console.log('onReplaced: ', e));
 chrome.tabs.onZoomChange.addListener((...e) => console.log('onZoomChange: ', e));
 chrome.tabs.onCreated.addListener((...e) => console.log('onCreated: ', e));
+
+chrome.storage.onChanged.addListener(changes => {
+    if (changes?.pausedActivated?.newValue) {
+        const timeoutValue = changes.pausedActivated.newValue.timestamp + changes.pausedActivated.newValue.pauseAmount * 60000 - Date.now();
+        setTimeout(() => {
+            chrome.tabs.getSelected(current => {
+                console.log({current});
+            })
+        }, timeoutValue + 1);
+    }
+})
+
+chrome.runtime.onInstalled.addListener((id, previousVersion, reason) => {
+    console.log('Extension has been installed', { id, previousVersion, reason });
+    reset()
+});

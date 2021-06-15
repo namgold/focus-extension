@@ -1,5 +1,15 @@
 {
     "files.exclude": {
         "**/build": false,
+    },
+    "triggerTaskOnSave.delay": 1000,
+    "triggerTaskOnSave.restart": true,
+    "triggerTaskOnSave.showStatusBarToggle": true,
+    "triggerTaskOnSave.showNotifications": true,
+    "triggerTaskOnSave.tasks": {
+        "npm: build": [
+            "src/**",
+            "public/**",
+        ],
     }
 }
