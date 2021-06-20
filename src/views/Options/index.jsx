@@ -7,24 +7,32 @@ import './options.css';
 
 const Favicon = props => {
     const { src } = props;
-    const [icoSrc, setIcoSrc] = useState(src);
+    const [icoStrategyIndex, setIcoStrategyIndex] = useState(0);
+    const [aHref, setAHref] = useState(src);
+
+    const icoStrategy = [
+        url => (url.startsWith('https://') || url.startsWith('http://') ? url : 'https://' + url) + '/favicon.ico',
+        url => 'https://favicon.yandex.net/favicon/' + url,
+    ]
 
     useEffect(() => {
-        const httpSrc = src.startsWith('https://') || src.startsWith('http://') ? src : 'https://' + src;
-        try {
-            setIcoSrc(new URL(httpSrc) + '/favicon.ico');
-        } catch (e) {
-            setIcoSrc(src + '/favicon.ico');
-            return;
-        }
-
+        setIcoStrategyIndex(0);
+        setAHref(src.startsWith('https://') || src.startsWith('http://') ? src : 'https://' + src);
     }, [src]);
 
     const handleError = e => {
         console.log('HandleError', e);
+        if (icoStrategyIndex < icoStrategy.length - 1)
+            setIcoStrategyIndex(icoStrategyIndex + 1);
     }
 
-    return <img src={icoSrc} width='32px' alt={src} onError={handleError} />;
+    return (
+        <a href={aHref} target="_blank" rel="noreferrer">
+            {/* <div style={{ overflow: 'hidden', width: '32px', height: '32px' }}> */}
+                <img src={icoStrategy[icoStrategyIndex](src)} width='32px' alt={src} onError={handleError} />
+            {/* </div> */}
+        </a>
+    );
 }
 
 const MemoFavicon = React.memo(Favicon);
@@ -102,13 +110,13 @@ function Options() {
 
     return (
         <div className="option">
-            <div className='row'>
+            <div className='row' style={{ justifyContent: 'center' }}>
                 <h1>FOCUS</h1>
             </div>
             <div className='row mt-3'>
                 <div className='col'>
                     <label>
-                        Pause Amount:&nbsp;
+                        Pause Amount (minutes):&nbsp;
                         <input id='pauseAmount' className='form-control custom-input' value={pauseAmount} onChange={onChangePauseAmount} />
                     </label>
                 </div>
@@ -116,7 +124,7 @@ function Options() {
             <div className='row mt-3'>
                 <div className='col'>
                     <label>
-                        Reset Amount:&nbsp;
+                        Reset Amount (minutes):&nbsp;
                         <input id='resetAmount' className='form-control custom-input' value={resetAmount} onChange={onChangeResetAmount} />
                     </label>
                 </div>
@@ -127,7 +135,7 @@ function Options() {
                 </div>
             </div>
             <div className='row mt-3'>
-                <div className='col-6 offset-3'>
+                <div className='col-xxl-6 offset-xxl-3 col-xl-8 offset-xl-2 col-md-10 offset-md-1'>
                     <table class="table table-dark">
                         <thead>
                             <tr>

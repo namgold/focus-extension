@@ -7,14 +7,23 @@ const reset = () => {
     chrome.storage.local.set(DEFAULT);
 }
 
-const isRemove = (storage, url) => storage.activated
-                                && storage.pausedActivated
-                                && Number.isInteger(storage.pausedActivated.timestamp)
-                                && Number.isInteger(storage.pausedActivated.pauseAmount)
-                                && Number.isInteger(storage.pausedActivated.resetAmount)
-                                && storage.blockWebsites.find(website => website.active && new URL(url).hostname.toLowerCase().includes(website.url.toLowerCase()))
-                                && !(Date.now() >= storage.pausedActivated.timestamp && Date.now() - storage.pausedActivated.timestamp < storage.pausedActivated.pauseAmount * 60000);
-
+const isRemove = (storage, url) => {
+    if (!url) return false;
+    let u;
+    try {
+        u = new URL(url);
+    } catch (e) {
+        console.log('URL "' + url + '" is invalid');
+        return false;
+    }
+    return storage.activated
+        && storage.pausedActivated
+        && Number.isInteger(storage.pausedActivated.timestamp)
+        && Number.isInteger(storage.pausedActivated.pauseAmount)
+        && Number.isInteger(storage.pausedActivated.resetAmount)
+        && storage.blockWebsites.find(website => website.active && u.hostname.toLowerCase().includes(website.url.toLowerCase()))
+        && !(Date.now() >= storage.pausedActivated.timestamp && Date.now() - storage.pausedActivated.timestamp < storage.pausedActivated.pauseAmount * 60000);
+}
 chrome.tabs.onUpdated.addListener(function(id, info, tab) {
     chrome.storage.local.get(storage => {
         if (isRemove(storage, tab.url)) chrome.tabs.remove(id);
@@ -22,23 +31,31 @@ chrome.tabs.onUpdated.addListener(function(id, info, tab) {
 });
 
 const getActivatedTab = done => {
-    chrome.tabs.query({ 'active': true, 'lastFocusedWindow': true }, function (tabs) {
-        try {
-            if (Array.isArray(tabs)) {
-                if (tabs[0]) {
-                    done(tabs[0]);
+    try {
+        chrome.tabs.query({ 'active': true, 'lastFocusedWindow': true }, function (tabs) {
+            try {
+                if (Array.isArray(tabs)) {
+                    if (tabs[0]) {
+                        done(tabs[0]);
+                    }
+                } else {
+                    setTimeout(function() {
+                        getActivatedTab(done);
+                    }, 100);
                 }
-            } else {
+            } catch(err) {
+                console.error('Error in getActivatedTab > query > callback', err);
                 setTimeout(function() {
                     getActivatedTab(done);
                 }, 100);
             }
-        } catch(err) {
-            setTimeout(function() {
-                getActivatedTab(done);
-            }, 100);
-        }
-    });
+        });
+    } catch (e) {
+        console.error('Error in getActivatedTab > query', e);
+        setTimeout(function() {
+            getActivatedTab(done);
+        }, 100);
+    }
 }
 
 

@@ -1,7 +1,7 @@
 export const DEFAULT = {
     blockWebsites: [
         { url: "facebook.com", active: true },
-        { url: "youtube.com", active: true },
+        { url: "youtube.com", active: false },
         { url: "twitter.com", active: true },
         { url: "reddit.com", active: true },
         { url: "pinterest.com", active: true },
@@ -12,6 +12,8 @@ export const DEFAULT = {
         { url: "quora.com", active: true },
         { url: "yahoo.com", active: true },
         { url: "netflix.com", active: true },
+        { url: "voz.vn", active: true },
+        { url: "o.voz.vn", active: true },
     ],
     // timeTracker: [],
     // elapsed: 0,

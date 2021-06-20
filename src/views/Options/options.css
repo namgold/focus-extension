@@ -91,6 +91,6 @@ input:checked + .slider:before {
 }
 
 .custom-table-input {
-    -webkit-box-shadow: 0 0 0 30px #212529 inset !important;
+    -webkit-box-shadow: 0 0 0 30px #343a40 inset !important;
     color: white !important;
 }

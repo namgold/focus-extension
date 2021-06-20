@@ -23,7 +23,7 @@ const Popup = props => {
 
     return (
         <div className="popup">
-            <div className='row'>
+            <div className='row' style={{ justifyContent: 'center' }}>
                 <h1>FOCUS</h1>
             </div>
             <div className='row mt-3'>
