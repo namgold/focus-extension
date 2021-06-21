@@ -13,7 +13,7 @@ const isRemove = (storage, url) => {
     try {
         u = new URL(url);
     } catch (e) {
-        console.log('URL "' + url + '" is invalid');
+        console.warn('URL "' + url + '" is invalid');
         return false;
     }
     return storage.activated
@@ -30,31 +30,21 @@ chrome.tabs.onUpdated.addListener(function(id, info, tab) {
     });
 });
 
+let gettingActivatedTab = false;
+
 const getActivatedTab = done => {
+    if (gettingActivatedTab) return;
     try {
+        gettingActivatedTab = true;
         chrome.tabs.query({ 'active': true, 'lastFocusedWindow': true }, function (tabs) {
-            try {
-                if (Array.isArray(tabs)) {
-                    if (tabs[0]) {
-                        done(tabs[0]);
-                    }
-                } else {
-                    setTimeout(function() {
-                        getActivatedTab(done);
-                    }, 100);
-                }
-            } catch(err) {
-                console.error('Error in getActivatedTab > query > callback', err);
-                setTimeout(function() {
-                    getActivatedTab(done);
-                }, 100);
-            }
+            gettingActivatedTab = false;
+            if (Array.isArray(tabs) && tabs[0]) done(tabs[0]);
+            else setTimeout(() => getActivatedTab(done), 100);
         });
     } catch (e) {
-        console.error('Error in getActivatedTab > query', e);
-        setTimeout(function() {
-            getActivatedTab(done);
-        }, 100);
+        gettingActivatedTab = false;
+        console.error('🚀 Error in getActivatedTab > query', e);
+        setTimeout(() => getActivatedTab(done), 100);
     }
 }
 
@@ -67,40 +57,29 @@ chrome.tabs.onActivated.addListener(activeInfo => {
             });
         }
     });
-    // const intervalId = setInterval(() => {
-    //     count++;
-    //     chrome.tabs.get(activeInfo.tabId, tab => {
-    //         if (tab) {
-    //             clearInterval(intervalId);
-    //             chrome.storage.local.get(storage => {
-    //                 if (isRemove(storage, tab.url)) chrome.tabs.remove(activeInfo.tabId);
-    //             });
-    //         }
-    //     });
-    //     if (count > 1000)
-    //         clearInterval(intervalId);
-    // }, 200);
 });
 
-chrome.tabs.onUpdated.addListener((...e) => console.log('onUpdated: ', e))
-chrome.tabs.onMoved.addListener((...e) => console.log('onMoved: ', e));
-chrome.tabs.onActivated.addListener((...e) => console.log('onActivated: ', e));
-chrome.tabs.onHighlighted.addListener((...e) => console.log('onHighlighted: ', e));
-chrome.tabs.onDetached.addListener((...e) => console.log('onDetached: ', e));
-chrome.tabs.onAttached.addListener((...e) => console.log('onAttached: ', e));
-chrome.tabs.onRemoved.addListener((...e) => console.log('onRemoved: ', e));
-chrome.tabs.onReplaced.addListener((...e) => console.log('onReplaced: ', e));
-chrome.tabs.onZoomChange.addListener((...e) => console.log('onZoomChange: ', e));
-chrome.tabs.onCreated.addListener((...e) => console.log('onCreated: ', e));
+chrome.tabs.onUpdated.addListener((...e) => console.info('onUpdated: ', e))
+chrome.tabs.onMoved.addListener((...e) => console.info('onMoved: ', e));
+chrome.tabs.onActivated.addListener((...e) => console.info('onActivated: ', e));
+chrome.tabs.onHighlighted.addListener((...e) => console.info('onHighlighted: ', e));
+chrome.tabs.onDetached.addListener((...e) => console.info('onDetached: ', e));
+chrome.tabs.onAttached.addListener((...e) => console.info('onAttached: ', e));
+chrome.tabs.onRemoved.addListener((...e) => console.info('onRemoved: ', e));
+chrome.tabs.onReplaced.addListener((...e) => console.info('onReplaced: ', e));
+chrome.tabs.onZoomChange.addListener((...e) => console.info('onZoomChange: ', e));
+chrome.tabs.onCreated.addListener((...e) => console.info('onCreated: ', e));
 
 chrome.storage.onChanged.addListener(changes => {
     if (changes?.pausedActivated?.newValue) {
         const timeoutValue = changes.pausedActivated.newValue.timestamp + changes.pausedActivated.newValue.pauseAmount * 60000 - Date.now();
         setTimeout(() => {
-            chrome.tabs.getSelected(current => {
-                console.log({current});
-            })
-        }, timeoutValue + 1);
+            const intervalId = setInterval(() => {
+                chrome.tabs.getSelected(current => {
+                    chrome.tabs.remove(current.id, () => clearInterval(intervalId));
+                });
+            }, 100);
+        }, timeoutValue);
     }
 })
 
