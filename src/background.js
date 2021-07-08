@@ -1,4 +1,4 @@
-import { init, isRemove } from "./utils/helper";
+import { init, remove } from "./utils/helper";
 
 // chrome.tabs.onUpdated.addListener((...e) => console.info('onUpdated: ', e))
 // chrome.tabs.onActivated.addListener((...e) => console.info('onActivated: ', e));
@@ -12,26 +12,18 @@ import { init, isRemove } from "./utils/helper";
 // chrome.tabs.onCreated.addListener((...e) => console.info('onCreated: ', e));
 
 chrome.tabs.onUpdated.addListener(function(id, info, tab) {
-    isRemove(tab.url, result => {
-        if (result) chrome.tabs.remove(id);
-    })
+    remove(tab);
 });
 
 chrome.tabs.onActivated.addListener(activeInfo => {
-    isRemove(result => {
-        if (result) chrome.tabs.remove(activeInfo.tabId);
-    })
+    remove();
 });
 
 chrome.storage.onChanged.addListener(changes => {
     if (changes?.pausedActivated?.newValue) {
         const timeoutValue = changes.pausedActivated.newValue.timestamp + changes.pausedActivated.newValue.pauseAmount * 60000 - Date.now();
         setTimeout(() => {
-            const intervalId = setInterval(() => {
-                chrome.tabs.getSelected(current => {
-                    chrome.tabs.remove(current.id, () => clearInterval(intervalId));
-                });
-            }, 100);
+            const intervalId = setInterval(remove, 100);
         }, timeoutValue);
     }
 })

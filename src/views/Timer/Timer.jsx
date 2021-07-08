@@ -1,15 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useChromeStorageSync } from 'use-chrome-storage';
 import useInterval from '../../hooks/useInterval';
 import { DEFAULT } from '../../utils/const';
+import { isBlockWebsite } from '../../utils/helper';
 import { T } from '../../utils/utils';
 
 const Timer = () => {
+    const [blockWebsites] = useChromeStorageSync('blockWebsites', DEFAULT.blockWebsites);
     const [pausedActivated] = useChromeStorageSync('pausedActivated', DEFAULT.pausedActivated);
     const { timestamp, pauseAmount } = pausedActivated;
     const [,forceUpdate] = useState(0);
     useInterval(() => requestAnimationFrame(forceUpdate), 1000)
+    const isBlock = isBlockWebsite(window.location.origin, { blockWebsites });
+    if (!isBlock) return null;
     const timeleft = (timestamp + pauseAmount * 60000 - Date.now()) / 1000;
+
     return (
         <div
             style={{

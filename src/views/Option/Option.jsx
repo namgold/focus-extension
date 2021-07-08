@@ -75,7 +75,7 @@ function Options() {
     const onKeyDownAddWebSite = e => {
         if (e.keyCode === 13) {
             // e.preventDefault();
-            if (blockWebsitesStorage.find(blockWebsite => blockWebsite.url === newWebsite)) {
+            if (blockWebsitesStorage?.find(blockWebsite => blockWebsite.url === newWebsite)) {
                 T.notify('Block website existed', T.NOTIFY_TYPE.DANGER);
             } else {
                 const newWebsiteRecord = { url: newWebsite, active: true };

@@ -18,14 +18,20 @@ export const reset = () => {
 }
 
 let gettingActivatedTab = false;
+let getActivatedTabCount = 0;
 
 export const getActivatedTab = done => {
+    getActivatedTabCount++;
     if (gettingActivatedTab) return;
+    if (getActivatedTabCount > 50) return;
     try {
         gettingActivatedTab = true;
-        chrome.tabs.query({ 'active': true, 'lastFocusedWindow': true }, function (tabs) {
+        chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
             gettingActivatedTab = false;
-            if (Array.isArray(tabs) && tabs[0]) done(tabs[0]);
+            if (Array.isArray(tabs) && tabs[0]) {
+                done(tabs[0]);
+                getActivatedTabCount = 0
+            }
             else setTimeout(() => getActivatedTab(done), 100);
         });
     } catch (e) {
@@ -112,4 +118,16 @@ export const isRemove = (url, done) => {
             else done(false);
         })
     });
+}
+
+export const remove = (params) => {
+    const { url, id } = params || {};
+    const removeWithParams = ({ url, id }) => {
+        isRemove(url, result => {
+            if (result) chrome.tabs.remove(id);
+        })
+    }
+    if (url && id) removeWithParams({ url, id });
+    else getActivatedTab(removeWithParams);
+
 }
