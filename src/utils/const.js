@@ -26,3 +26,5 @@ export const DEFAULT = {
     resetAmount: 30,
     activated: true,
 }
+
+export const storage = chrome.storage.sync;

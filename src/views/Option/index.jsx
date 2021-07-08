@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import Options from './views/Options'
+import Options from './Option'
 
 ReactDOM.render(
     <React.StrictMode>

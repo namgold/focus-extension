@@ -14,9 +14,11 @@ function override(config, env) {
   // Replace single entry point in the config with multiple ones
   // Note: you may remove any property below except "popup" to exclude respective entry point from compilation
   config.entry = {
-    popup: paths.appIndexJs,
-    options: paths.appSrc + '/options.js',
-    background: paths.appSrc + '/background.js',
+    popup: paths.appSrc + '\\views\\Popup\\index.jsx',
+    options: paths.appSrc + '\\views\\Option\\index.jsx',
+    timer: paths.appSrc + '\\views\\Timer\\InjectTimer.jsx',
+    background: paths.appSrc + '\\background.js',
+    contentScript: paths.appSrc + '\\contentScript.js',
   };
   // Change output filename template to get rid of hash there
   config.output.filename = 'static/js/[name].js';
@@ -40,24 +42,22 @@ function override(config, env) {
     removeEmptyAttributes: true,
     removeStyleLinkTypeAttributes: true,
     keepClosingSlash: true,
-    minifyJS: true,
+    minifyJS: false,
     minifyCSS: true,
     minifyURLs: true,
   };
   const isEnvProduction = env === 'production';
 
   // Custom HtmlWebpackPlugin instance for index (popup) page
-  const indexHtmlPlugin = new HtmlWebpackPlugin({
+  const popupHtmlPlugin = new HtmlWebpackPlugin({
     inject: true,
     chunks: ['popup'],
-    template: paths.appHtml,
+    template: paths.appPublic + '/popup.html',
     filename: 'popup.html',
     minify: isEnvProduction && minifyOpts,
   });
   // Replace origin HtmlWebpackPlugin instance in config.plugins with the above one
-  config.plugins = replacePlugin(config.plugins,
-    (name) => /HtmlWebpackPlugin/i.test(name), indexHtmlPlugin
-  );
+  config.plugins = replacePlugin(config.plugins, name => /HtmlWebpackPlugin/i.test(name), popupHtmlPlugin);
 
   // Extra HtmlWebpackPlugin instance for options page
   const optionsHtmlPlugin = new HtmlWebpackPlugin({
@@ -72,27 +72,13 @@ function override(config, env) {
   config.plugins.push(optionsHtmlPlugin);
 
   // Custom ManifestPlugin instance to cast asset-manifest.json back to old plain format
-  const manifestPlugin = new ManifestPlugin({
-    fileName: 'asset-manifest.json',
-  });
-  // Replace origin ManifestPlugin instance in config.plugins with the above one
-  config.plugins = replacePlugin(config.plugins,
-    (name) => /ManifestPlugin/i.test(name), manifestPlugin
-  );
+  const manifestPlugin = new ManifestPlugin({ fileName: 'asset-manifest.json' });
+  config.plugins = replacePlugin(config.plugins, name => /ManifestPlugin/i.test(name), manifestPlugin); // Replace origin ManifestPlugin instance in config.plugins with the above one
 
   // Custom MiniCssExtractPlugin instance to get rid of hash in filename template
-  const miniCssExtractPlugin = new MiniCssExtractPlugin({
-    filename: 'static/css/[name].css'
-  });
-  // Replace origin MiniCssExtractPlugin instance in config.plugins with the above one
-  config.plugins = replacePlugin(config.plugins,
-    (name) => /MiniCssExtractPlugin/i.test(name), miniCssExtractPlugin
-  );
-
-  // Remove GenerateSW plugin from config.plugins to disable service worker generation
-  config.plugins = replacePlugin(config.plugins,
-    (name) => /GenerateSW/i.test(name)
-  );
+  const miniCssExtractPlugin = new MiniCssExtractPlugin({ filename: 'static/css/[name].css' });
+  config.plugins = replacePlugin(config.plugins, name => /MiniCssExtractPlugin/i.test(name), miniCssExtractPlugin); // Replace origin MiniCssExtractPlugin instance in config.plugins with the above one
+  config.plugins = replacePlugin(config.plugins, name => /GenerateSW/i.test(name)); // Remove GenerateSW plugin from config.plugins to disable service worker generation
 
   return config;
 }

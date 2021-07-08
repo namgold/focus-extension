@@ -1,11 +1,12 @@
 {
     "files.exclude": {
-        "**/build": false,
+        "*.abc": true,
+        "**/build": false
     },
     "triggerTaskOnSave.delay": 1000,
     "triggerTaskOnSave.restart": true,
     "triggerTaskOnSave.showStatusBarToggle": true,
-    "triggerTaskOnSave.showNotifications": true,
+    "triggerTaskOnSave.showNotifications": false,
     "triggerTaskOnSave.tasks": {
         "npm: build": [
             "src/**",
