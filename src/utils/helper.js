@@ -1,4 +1,3 @@
-import InjectTimer from "../views/Timer/InjectTimer";
 import { DEFAULT, storage } from "./const";
 import { T } from "./utils";
 

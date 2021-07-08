@@ -39,12 +39,14 @@ const Favicon = props => {
 const MemoFavicon = React.memo(Favicon);
 
 function Options() {
-    const [blockWebsitesStorage, setBlockWebsitesStorage] = useChromeStorageSync('blockWebsites', DEFAULT.blockWebsites);
+    let [blockWebsitesStorage, setBlockWebsitesStorage] = useChromeStorageSync('blockWebsites', DEFAULT.blockWebsites);
     const [blockWebsitesState, setBlockWebsitesState] = useState(blockWebsitesStorage);
     const [pauseAmount, setPauseAmount] = useChromeStorageSync('pauseAmount', DEFAULT.pauseAmount);
     const [resetAmount, setResetAmount] = useChromeStorageSync('resetAmount', DEFAULT.resetAmount);
     const [newWebsite, setNewWebsite] = useState('');
     const [blockWebsitesChanged, setBlockWebsitesChanged] = useState(0);
+
+    blockWebsitesStorage = blockWebsitesStorage || DEFAULT.blockWebsites; // For after reset
 
     const onChangePauseAmount = e => {
         // e.preventDefault();
@@ -114,7 +116,7 @@ function Options() {
         if (blockWebsitesStorage.hasDuplicate(blockWebsite => blockWebsite.url)) {
             setBlockWebsitesStorage(blockWebsitesStorage.getUniques());
         }
-    }, [blockWebsitesStorage])
+    }, [blockWebsitesStorage]);
 
     const onReset = () => {
         T.confirm('Reset confirm', 'Are you sure to reset all setting? All setting will be lost!', T.ALERT_TYPE.WARNING, true, answer => {
@@ -206,12 +208,11 @@ function Options() {
                     <button onClick={onReset} className='btn btn-danger'>Reset settings to default</button>
                 </div>
             </div>
-            <div className='row mt-3'>
+            {/* <div className='row mt-3'>
                 <div className='col'>
                     <button onClick={onResetTime} className='btn btn-danger'>Reset time to default</button>
                 </div>
-            </div>
-
+            </div> */}
         </div>
     );
 }
